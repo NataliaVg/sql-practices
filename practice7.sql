@@ -219,6 +219,102 @@ SELECT * FROM meat_poultry_egg_establishments;
 commit;
 SELECT * FROM meat_poultry_egg_establishments;
 
+-- Commit changes at the end:
+START TRANSACTION;
+
+UPDATE meat_poultry_egg_establishments
+SET company = 'AGRO Merchants Oakland LLC'
+WHERE company = 'AGRO Merchants Oakland, LLC';
+
+COMMIT;
 
 
+CREATE TABLE state_regions (
+    st text CONSTRAINT st_key PRIMARY KEY,
+    region text NOT NULL
+);
 
+COPY state_regions
+FROM '/tmp/state_regions.csv'
+WITH (FORMAT CSV, HEADER);
+
+-- Adding and updating an inspection_deadline column
+
+ALTER TABLE meat_poultry_egg_establishments
+    ADD COLUMN inspection_deadline timestamp with time zone;
+
+UPDATE meat_poultry_egg_establishments establishments
+SET inspection_deadline = '2022-12-01 00:00 EST'
+WHERE EXISTS (SELECT state_regions.region
+              FROM state_regions
+              WHERE establishments.st = state_regions.st 
+                    AND state_regions.region = 'New England');
+	
+-- Viewing updated inspection_deadline values
+
+SELECT st, inspection_deadline
+FROM meat_poultry_egg_establishments
+GROUP BY st, inspection_deadline
+ORDER BY st;
+
+-- Deleting rows matching an expression
+
+DELETE FROM meat_poultry_egg_establishments
+WHERE st IN('AS','GU','MP','PR','VI');
+
+-- Listing 10-22: Removing a column from a table using DROP
+
+ALTER TABLE meat_poultry_egg_establishments DROP COLUMN zip_copy;
+
+-- Listing 10-23: Removing a table from a database using DROP
+
+DROP TABLE meat_poultry_egg_establishments_backup;
+
+-- Listing 10-24: Demonstrating a transaction block
+
+-- Start transaction and perform update
+START TRANSACTION;
+
+UPDATE meat_poultry_egg_establishments
+SET company = 'AGRO Merchantss Oakland LLC'
+WHERE company = 'AGRO Merchants Oakland, LLC';
+
+-- view changes
+SELECT company
+FROM meat_poultry_egg_establishments
+WHERE company LIKE 'AGRO%'
+ORDER BY company;
+
+-- Revert changes
+ROLLBACK;
+
+-- See restored state
+SELECT company
+FROM meat_poultry_egg_establishments
+WHERE company LIKE 'AGRO%'
+ORDER BY company;
+
+-- Alternately, commit changes at the end:
+START TRANSACTION;
+
+UPDATE meat_poultry_egg_establishments
+SET company = 'AGRO Merchants Oakland LLC'
+WHERE company = 'AGRO Merchants Oakland, LLC';
+
+COMMIT;
+
+-- Listing 10-25: Backing up a table while adding and filling a new column
+
+CREATE TABLE meat_poultry_egg_establishments_backup AS
+SELECT *,
+       '2023-02-14 00:00 EST'::timestamp with time zone AS reviewed_date
+FROM meat_poultry_egg_establishments;
+
+-- Listing 10-26: Swapping table names using ALTER TABLE
+
+ALTER TABLE meat_poultry_egg_establishments 
+    RENAME TO meat_poultry_egg_establishments_temp;
+ALTER TABLE meat_poultry_egg_establishments_backup 
+    RENAME TO meat_poultry_egg_establishments;
+ALTER TABLE meat_poultry_egg_establishments_temp 
+    RENAME TO meat_poultry_egg_establishments_backup;
