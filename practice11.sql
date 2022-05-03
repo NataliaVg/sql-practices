@@ -48,5 +48,36 @@ SELECT crime_id,
 FROM crime_reports
 ORDER BY crime_id;
 
+-- Listing 14-7: Using the regexp_matches() function with the 'g' flag
+SELECT crime_id,
+       regexp_matches(original_text, '\d{1,2}\/\d{1,2}\/\d{2}', 'g')
+FROM crime_reports
+ORDER BY crime_id;
+
+-- Listing 14-8: Using regexp_match() to find the second date
+-- Note that the result includes an unwanted hyphen
+SELECT crime_id,
+       regexp_match(original_text, '-\d{1,2}\/\d{1,2}\/\d{2}')
+FROM crime_reports
+ORDER BY crime_id;
+
+-- Listing 14-9: Using a capture group to return only the date
+-- Eliminates the hyphen
+SELECT crime_id,
+       regexp_match(original_text, '-(\d{1,2}\/\d{1,2}\/\d{2})')
+FROM crime_reports
+ORDER BY crime_id;
+
+-- Listing 14-10: Matching case number, date, crime type, and city
+
+SELECT
+    regexp_match(original_text, '(?:C0|SO)[0-9]+') AS case_number,
+    regexp_match(original_text, '\d{1,2}\/\d{1,2}\/\d{2}') AS date_1,
+    regexp_match(original_text, '\n(?:\w+ \w+|\w+)\n(.*):') AS crime_type,
+    regexp_match(original_text, '(?:Sq.|Plz.|Dr.|Ter.|Rd.)\n(\w+ \w+|\w+)\n')
+        AS city
+FROM crime_reports
+ORDER BY crime_id;
+
 reto 
 (C|SO)\d{9,10}
